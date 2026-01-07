@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 
 export default function Home() {
   return (
@@ -41,10 +42,15 @@ export default function Home() {
           </ul>
         </div>
 
-        <div className="aspect-[4/5] rounded-2xl bg-gray-100 flex items-center justify-center">
-          <span className="text-sm text-muted">
-            Replace with hero lifestyle image
-          </span>
+        <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-soft bg-gray-100 relative">
+          <Image
+            src="/images/Ganesha3.jpg"
+            alt="Gallery-quality framed photo in a modern living room"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
+          />
         </div>
       </section>
 
