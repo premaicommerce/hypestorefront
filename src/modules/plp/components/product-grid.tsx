@@ -1,5 +1,6 @@
 import Link from "next/link"
 import AddToBucketButton from "./add-to-bucket-button"
+import CartQtyControls from "./cart-qty-controls"
 
 function formatMoney(amount?: number) {
   if (typeof amount !== "number") return ""
@@ -22,6 +23,8 @@ export default function ProductGrid({ products }: { products: any[] }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
       {products.map((p) => {
+        const variantId = p?.variants?.[0]?.id
+
         const img = getImageUrl(p)
         const amount = getAmountCents(p)
 
@@ -53,6 +56,7 @@ export default function ProductGrid({ products }: { products: any[] }) {
                     {p.title}
                   </div>
                 </div>
+                {variantId ? <CartQtyControls variantId={variantId} /> : null}
 
                 <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
                   {formatMoney(amount)}
