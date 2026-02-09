@@ -1,7 +1,7 @@
 // src/app/[countryCode]/(main)/categories/[handle]/page.tsx
-import FacetSidebar from "@/modules/plp/components/facet-sidebar"
-import ProductGrid from "@/modules/plp/components/product-grid"
-import { sdk } from "@/lib/medusa" // <- adjust to your project’s Medusa client
+import FacetSidebar from "../../../../../modules/plp/components/facet-sidebar"
+import ProductGrid from "../../../../../modules/plp/components/product-grid"
+import { sdk } from "@lib/config"
 
 export default async function CategoryPage({
                                              params,
