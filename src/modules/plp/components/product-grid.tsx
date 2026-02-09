@@ -8,16 +8,14 @@ function formatMoney(amount?: number) {
 
 function getImageUrl(p: any): string | null {
   const url = p?.thumbnail || p?.images?.[0]?.url || null
-  if (!url) return null
-  // guard against accidental objects
-  return typeof url === "string" ? url : null
+  return typeof url === "string" && url.length ? url : null
 }
 
 function getAmountCents(p: any): number | undefined {
-  return (
+  const amount =
     p?.variants?.[0]?.calculated_price?.calculated_amount ??
     p?.variants?.[0]?.prices?.[0]?.amount
-  )
+  return typeof amount === "number" ? amount : undefined
 }
 
 export default function ProductGrid({ products }: { products: any[] }) {
@@ -35,17 +33,12 @@ export default function ProductGrid({ products }: { products: any[] }) {
           >
             <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
               {img ? (
-                // Use <img> to avoid Next remote image config issues
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={img}
                   alt={p.title ?? "Product"}
                   className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                   loading="lazy"
-                  onError={(e) => {
-                    // hide broken images cleanly
-                    ;(e.currentTarget as HTMLImageElement).style.display = "none"
-                  }}
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-xs text-neutral-500">
