@@ -126,37 +126,77 @@ function PriceBlock() {
   const router = useRouter()
   const pathname = usePathname()
 
-  const minPrice = sp.get("minPrice") ?? ""
-  const maxPrice = sp.get("maxPrice") ?? ""
+  const min = sp.get("minPrice") ?? ""
+  const max = sp.get("maxPrice") ?? ""
 
-  function setParam(key: "minPrice" | "maxPrice", value: string) {
+  const [minPrice, setMinPrice] = useState(min)
+  const [maxPrice, setMaxPrice] = useState(max)
+
+  function apply() {
     const next = new URLSearchParams(sp)
-    const v = value.trim()
-    if (v) next.set(key, v)
-    else next.delete(key)
+
+    const mn = minPrice.trim()
+    const mx = maxPrice.trim()
+
+    if (mn) next.set("minPrice", mn)
+    else next.delete("minPrice")
+
+    if (mx) next.set("maxPrice", mx)
+    else next.delete("maxPrice")
+
     next.delete("page")
+    router.push(`${pathname}?${next.toString()}`, { scroll: false })
+  }
+
+  function clear() {
+    const next = new URLSearchParams(sp)
+    next.delete("minPrice")
+    next.delete("maxPrice")
+    next.delete("page")
+    setMinPrice("")
+    setMaxPrice("")
     router.push(`${pathname}?${next.toString()}`, { scroll: false })
   }
 
   return (
     <div className="border-b px-4 py-4">
-      <div className="font-medium text-sm mb-3">Price</div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="font-medium text-sm">Price</div>
+        {(min || max) && (
+          <button
+            type="button"
+            onClick={clear}
+            className="text-xs text-neutral-600 hover:underline"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
         <input
-          defaultValue={minPrice}
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
           placeholder="Min"
           className="rounded-lg border px-3 py-2 text-sm"
           inputMode="numeric"
-          onBlur={(e) => setParam("minPrice", e.target.value)}
         />
         <input
-          defaultValue={maxPrice}
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
           placeholder="Max"
           className="rounded-lg border px-3 py-2 text-sm"
           inputMode="numeric"
-          onBlur={(e) => setParam("maxPrice", e.target.value)}
         />
       </div>
+
+      <button
+        type="button"
+        onClick={apply}
+        className="mt-3 w-full rounded-lg bg-neutral-900 text-white py-2 text-sm hover:bg-neutral-800"
+      >
+        Apply
+      </button>
     </div>
   )
 }

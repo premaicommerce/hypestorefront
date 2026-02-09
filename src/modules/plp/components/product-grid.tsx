@@ -1,21 +1,73 @@
+// src/modules/plp/components/product-grid.tsx
 import Link from "next/link"
+
+function formatMoney(amount?: number) {
+  if (typeof amount !== "number") return ""
+  return `£${(amount / 100).toFixed(2)}`
+}
+
+function getImageUrl(p: any): string | null {
+  const url = p?.thumbnail || p?.images?.[0]?.url || null
+  if (!url) return null
+  // guard against accidental objects
+  return typeof url === "string" ? url : null
+}
+
+function getAmountCents(p: any): number | undefined {
+  return (
+    p?.variants?.[0]?.calculated_price?.calculated_amount ??
+    p?.variants?.[0]?.prices?.[0]?.amount
+  )
+}
 
 export default function ProductGrid({ products }: { products: any[] }) {
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-      {products.map((p) => (
-        <Link
-          key={p.id}
-          href={`/products/${p.handle}`}
-          className="rounded-xl border bg-white p-3 hover:shadow-sm transition"
-        >
-          <div className="aspect-square rounded-lg bg-neutral-100 mb-3" />
-          <div className="text-sm font-medium line-clamp-2">{p.title}</div>
-          <div className="text-sm text-neutral-700 mt-1">
-            {/* map price here */}
-          </div>
-        </Link>
-      ))}
+    <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
+      {products.map((p) => {
+        const img = getImageUrl(p)
+        const amount = getAmountCents(p)
+
+        return (
+          <Link
+            key={p.id}
+            href={`/products/${p.handle}`}
+            className="group rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
+          >
+            <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
+              {img ? (
+                // Use <img> to avoid Next remote image config issues
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={img}
+                  alt={p.title ?? "Product"}
+                  className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                  loading="lazy"
+                  onError={(e) => {
+                    // hide broken images cleanly
+                    ;(e.currentTarget as HTMLImageElement).style.display = "none"
+                  }}
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-xs text-neutral-500">
+                  No image
+                </div>
+              )}
+            </div>
+
+            <div className="mt-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-neutral-900 line-clamp-2">
+                  {p.title}
+                </div>
+              </div>
+
+              <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
+                {formatMoney(amount)}
+              </div>
+            </div>
+          </Link>
+        )
+      })}
     </div>
   )
 }
