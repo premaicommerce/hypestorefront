@@ -19,7 +19,13 @@ function getAmountCents(p: any): number | undefined {
   return typeof amount === "number" ? amount : undefined
 }
 
-export default function ProductGrid({ products }: { products: any[] }) {
+export default function ProductGrid({
+                                      products,
+                                      countryCode,
+                                    }: {
+  products: any[]
+  countryCode: string
+}) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
       {products.map((p) => {
@@ -56,8 +62,9 @@ export default function ProductGrid({ products }: { products: any[] }) {
                     {p.title}
                   </div>
                 </div>
-                {variantId ? <CartQtyControls variantId={variantId} /> : null}
-
+                {variantId ? (
+                  <CartQtyControls countryCode={countryCode} variantId={variantId} />
+                ) : null}
                 <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
                   {formatMoney(amount)}
                 </div>

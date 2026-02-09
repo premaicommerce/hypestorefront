@@ -471,3 +471,13 @@ export async function listCartOptions() {
     cache: "force-cache",
   })
 }
+
+export async function getLineItemForVariant(variantId: string) {
+  if (!variantId) return { lineId: null, quantity: 0 }
+
+  const cart = await retrieveCart(undefined, "id,*items")
+  if (!cart) return { lineId: null, quantity: 0 }
+
+  const item = cart.items?.find((it: any) => it.variant_id === variantId)
+  return { lineId: item?.id ?? null, quantity: item?.quantity ?? 0 }
+}

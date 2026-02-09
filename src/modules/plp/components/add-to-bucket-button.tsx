@@ -63,12 +63,7 @@ export default function AddToBucketButton({
         className
       }
     >
-      Add to bucket
-      {qty > 0 && (
-        <span className="absolute -top-2 -right-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-2 text-xs font-semibold text-neutral-900 border">
-          {qty}
-        </span>
-      )}
+
     </button>
   )
 }

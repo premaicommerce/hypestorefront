@@ -1,155 +1,74 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 
-const CART_ID_KEY = "medusa_cart_id_v2"
-
-function getEnv() {
-  const backend = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
-  const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-  if (!backend) throw new Error("NEXT_PUBLIC_MEDUSA_BACKEND_URL missing")
-  if (!key) throw new Error("NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY missing")
-  return { backend, key }
-}
-
-async function storeFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const { backend, key } = getEnv()
-  const res = await fetch(`${backend}${path}`, {
-    ...init,
-    headers: {
-      "content-type": "application/json",
-      "x-publishable-api-key": key,
-      ...(init?.headers || {}),
-    },
-    cache: "no-store",
-  })
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "")
-    throw new Error(`${res.status} ${res.statusText}: ${txt}`)
-  }
-  return (await res.json()) as T
-}
-
-async function getOrCreateCart(countryCode?: string) {
-  const existing = typeof window !== "undefined" ? localStorage.getItem(CART_ID_KEY) : null
-  if (existing) return existing
-
-  // Create cart (region is usually inferred in many setups; if your backend requires region_id,
-  // we’ll adjust later. For now this matches common Medusa v2 store setups.)
-  const body: any = {}
-  if (countryCode) body.country_code = countryCode
-
-  const created = await storeFetch<{ cart: { id: string } }>(`/store/carts`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  })
-
-  localStorage.setItem(CART_ID_KEY, created.cart.id)
-  return created.cart.id
-}
-
-type Cart = {
-  cart: {
-    id: string
-    items: Array<{
-      id: string
-      quantity: number
-      variant_id: string
-    }>
-  }
-}
-
+// 🔁 IMPORTANT: adjust this import to your actual path where the actions file is located
+import {
+  addToCart,
+  updateLineItem,
+  deleteLineItem,
+  getOrSetCart,
+  getLineItemForVariant,
+} from "@lib/data/cart"
 export default function CartQtyControls({
-                                          variantId,
                                           countryCode,
+                                          variantId,
                                         }: {
+  countryCode: string
   variantId: string
-  countryCode?: string
 }) {
-  const [cartId, setCartId] = useState<string | null>(null)
-  const [itemId, setItemId] = useState<string | null>(null)
-  const [qty, setQty] = useState<number>(0)
-  const [busy, setBusy] = useState(false)
-  const disabledMinus = qty <= 0 || busy
+  const router = useRouter()
+  const [qty, setQty] = useState(0)
+  const [lineId, setLineId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  // Load cart + qty
+  const minusDisabled = qty <= 0 || isPending
+
+  async function sync() {
+    // Ensure cart exists (sets cookie) then read qty for this variant
+    await getOrSetCart(countryCode)
+    const res = await getLineItemForVariant(variantId)
+    setQty(res.quantity)
+    setLineId(res.lineId)
+  }
+
   useEffect(() => {
-    let mounted = true
+    startTransition(() => {
+      sync().catch(() => {})
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryCode, variantId])
 
-    ;(async () => {
-      try {
-        const id = await getOrCreateCart(countryCode)
-        if (!mounted) return
-        setCartId(id)
-
-        const data = await storeFetch<Cart>(`/store/carts/${id}`)
-        if (!mounted) return
-
-        const found = data.cart.items.find((it) => it.variant_id === variantId)
-        setItemId(found?.id ?? null)
-        setQty(found?.quantity ?? 0)
-      } catch (e) {
-        // optional: console.error
-      }
-    })()
-
-    return () => {
-      mounted = false
-    }
-  }, [variantId, countryCode])
-
-  async function refresh() {
-    if (!cartId) return
-    const data = await storeFetch<Cart>(`/store/carts/${cartId}`)
-    const found = data.cart.items.find((it) => it.variant_id === variantId)
-    setItemId(found?.id ?? null)
-    setQty(found?.quantity ?? 0)
-  }
-
-  async function inc() {
-    if (!cartId) return
-    setBusy(true)
-    try {
-      // If item exists, update quantity; else add new line item
-      if (itemId) {
-        await storeFetch(`/store/carts/${cartId}/line-items/${itemId}`, {
-          method: "POST",
-          body: JSON.stringify({ quantity: qty + 1 }),
-        })
+  function inc() {
+    startTransition(async () => {
+      // If already exists, just update; else add
+      if (lineId) {
+        await updateLineItem({ lineId, quantity: qty + 1 })
       } else {
-        await storeFetch(`/store/carts/${cartId}/line-items`, {
-          method: "POST",
-          body: JSON.stringify({ variant_id: variantId, quantity: 1 }),
-        })
+        await addToCart({ variantId, quantity: 1, countryCode })
       }
-      await refresh()
-    } finally {
-      setBusy(false)
-    }
+
+      await sync()
+      router.refresh() // ✅ updates header/cart page server components
+    })
   }
 
-  async function dec() {
-    if (!cartId || qty <= 0) return
-    setBusy(true)
-    try {
-      if (!itemId) return
+  function dec() {
+    if (qty <= 0 || !lineId) return
 
+    startTransition(async () => {
       const nextQty = qty - 1
+
       if (nextQty <= 0) {
-        // remove item
-        await storeFetch(`/store/carts/${cartId}/line-items/${itemId}`, {
-          method: "DELETE",
-        })
+        await deleteLineItem(lineId)
       } else {
-        await storeFetch(`/store/carts/${cartId}/line-items/${itemId}`, {
-          method: "POST",
-          body: JSON.stringify({ quantity: nextQty }),
-        })
+        await updateLineItem({ lineId, quantity: nextQty })
       }
-      await refresh()
-    } finally {
-      setBusy(false)
-    }
+
+      await sync()
+      router.refresh()
+    })
   }
 
   return (
@@ -157,9 +76,9 @@ export default function CartQtyControls({
       <button
         type="button"
         onClick={dec}
-        disabled={disabledMinus}
+        disabled={minusDisabled}
         className={`h-10 w-10 rounded-lg border text-lg leading-none ${
-          disabledMinus ? "opacity-40 cursor-not-allowed" : "hover:bg-neutral-50"
+          minusDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-neutral-50"
         }`}
         aria-label="Decrease quantity"
       >
@@ -173,9 +92,9 @@ export default function CartQtyControls({
       <button
         type="button"
         onClick={inc}
-        disabled={busy}
+        disabled={isPending}
         className={`h-10 w-10 rounded-lg border text-lg leading-none ${
-          busy ? "opacity-60 cursor-wait" : "hover:bg-neutral-50"
+          isPending ? "opacity-60 cursor-wait" : "hover:bg-neutral-50"
         }`}
         aria-label="Increase quantity"
       >

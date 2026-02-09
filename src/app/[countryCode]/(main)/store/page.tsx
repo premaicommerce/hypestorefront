@@ -114,7 +114,7 @@ export default async function StorePage({
             </form>
           </div>
 
-          <ProductGrid products={sorted} />
+          <ProductGrid products={sorted} countryCode={params.countryCode} />
         </main>
       </div>
     </div>
