@@ -1,85 +1,40 @@
-import { Metadata } from "next"
-import { notFound } from "next/navigation"
+// src/app/[countryCode]/(main)/categories/[handle]/page.tsx
+import FacetSidebar from "@/modules/plp/components/facet-sidebar"
+import ProductGrid from "@/modules/plp/components/product-grid"
+import { sdk } from "@/lib/medusa" // <- adjust to your project’s Medusa client
 
-import { getCategoryByHandle, listCategories } from "@lib/data/categories"
-import { listRegions } from "@lib/data/regions"
-import { StoreRegion } from "@medusajs/types"
-import CategoryTemplate from "@modules/categories/templates"
-import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+export default async function CategoryPage({
+                                             params,
+                                           }: {
+  params: { countryCode: string; handle: string }
+}) {
+  // 1) category by handle
+  const { product_categories } = await sdk.store.category.list({
+    handle: params.handle,
+  })
 
-type Props = {
-  params: Promise<{ category: string[]; countryCode: string }>
-  searchParams: Promise<{
-    sortBy?: SortOptions
-    page?: string
-  }>
-}
+  const category = product_categories?.[0]
+  if (!category) return <div>Not found</div>
 
-export async function generateStaticParams() {
-  const product_categories = await listCategories()
-
-  if (!product_categories) {
-    return []
-  }
-
-  const countryCodes = await listRegions().then((regions: StoreRegion[]) =>
-    regions?.map((r) => r.countries?.map((c) => c.iso_2)).flat()
-  )
-
-  const categoryHandles = product_categories.map(
-    (category: any) => category.handle
-  )
-
-  const staticParams = countryCodes
-    ?.map((countryCode: string | undefined) =>
-      categoryHandles.map((handle: any) => ({
-        countryCode,
-        category: [handle],
-      }))
-    )
-    .flat()
-
-  return staticParams
-}
-
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const params = await props.params
-  try {
-    const productCategory = await getCategoryByHandle(params.category)
-
-    const title = productCategory.name + " | Medusa Store"
-
-    const description = productCategory.description ?? `${title} category.`
-
-    return {
-      title: `${title} | Medusa Store`,
-      description,
-      alternates: {
-        canonical: `${params.category.join("/")}`,
-      },
-    }
-  } catch (error) {
-    notFound()
-  }
-}
-
-export default async function CategoryPage(props: Props) {
-  const searchParams = await props.searchParams
-  const params = await props.params
-  const { sortBy, page } = searchParams
-
-  const productCategory = await getCategoryByHandle(params.category)
-
-  if (!productCategory) {
-    notFound()
-  }
+  // 2) products by category
+  const { products, count } = await sdk.store.product.list({
+    category_id: [category.id],
+    limit: 24,
+    offset: 0,
+    // region_id / countryCode handling depends on your starter
+  })
 
   return (
-    <CategoryTemplate
-      category={productCategory}
-      sortBy={sortBy}
-      page={page}
-      countryCode={params.countryCode}
-    />
+    <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+        <aside className="hidden lg:block">
+          <FacetSidebar facets={[]} />
+        </aside>
+        <main>
+          <div className="mb-4 text-sm text-neutral-700">{count} products</div>
+          <ProductGrid products={products} />
+        </main>
+      </div>
+    </div>
   )
 }
