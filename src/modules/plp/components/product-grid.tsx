@@ -1,5 +1,5 @@
-// src/modules/plp/components/product-grid.tsx
 import Link from "next/link"
+import AddToBucketButton from "./add-to-bucket-button"
 
 function formatMoney(amount?: number) {
   if (typeof amount !== "number") return ""
@@ -26,39 +26,45 @@ export default function ProductGrid({ products }: { products: any[] }) {
         const amount = getAmountCents(p)
 
         return (
-          <Link
+          <div
             key={p.id}
-            href={`/products/${p.handle}`}
             className="group rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
           >
-            <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
-              {img ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={img}
-                  alt={p.title ?? "Product"}
-                  className="h-full w-full object-cover transition group-hover:scale-[1.02]"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-xs text-neutral-500">
-                  No image
-                </div>
-              )}
-            </div>
-
-            <div className="mt-3 flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-neutral-900 line-clamp-2">
-                  {p.title}
-                </div>
+            <Link href={`/products/${p.handle}`} className="block">
+              <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
+                {img ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={img}
+                    alt={p.title ?? "Product"}
+                    className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-xs text-neutral-500">
+                    No image
+                  </div>
+                )}
               </div>
 
-              <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
-                {formatMoney(amount)}
+              <div className="mt-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-neutral-900 line-clamp-2">
+                    {p.title}
+                  </div>
+                </div>
+
+                <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
+                  {formatMoney(amount)}
+                </div>
               </div>
+            </Link>
+
+            {/* Add button */}
+            <div className="mt-3">
+              <AddToBucketButton productId={p.id} />
             </div>
-          </Link>
+          </div>
         )
       })}
     </div>
