@@ -1,6 +1,7 @@
 import Link from "next/link"
 import AddToBucketButton from "./add-to-bucket-button"
 import CartQtyControls from "./cart-qty-controls"
+import AddToCartButton from "./add-to-cart-button"
 
 function formatMoney(amount?: number) {
   if (typeof amount !== "number") return ""
@@ -33,7 +34,12 @@ export default function ProductGrid({
 
         const img = getImageUrl(p)
         const amount = getAmountCents(p)
+        const variant = p?.variants?.[0]
 
+        const inStock =
+          variant &&
+          (variant.manage_inventory === false ||
+            (variant.inventory_quantity ?? 0) > 0)
         return (
           <div
             key={p.id}
@@ -62,12 +68,18 @@ export default function ProductGrid({
                     {p.title}
                   </div>
                 </div>
-                {variantId ? (
-                  <CartQtyControls countryCode={countryCode} variantId={variantId} />
-                ) : null}
-                <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
+
+                {variantId && (
+                  <AddToCartButton
+                    variantId={variantId}
+                    countryCode={countryCode}
+                    inStock={inStock}
+                  />
+                )}
+
+               {/* <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
                   {formatMoney(amount)}
-                </div>
+                </div>*/}
               </div>
             </Link>
 
