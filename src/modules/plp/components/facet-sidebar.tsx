@@ -25,9 +25,16 @@ function toggleMulti(sp: URLSearchParams, key: string, val: string) {
   return next
 }
 
-export default function FacetSidebar({ facets }: { facets: Facet[] }) {
+export default function FacetSidebar({
+                                       facets,
+                                       showPrice,
+                                     }: {
+  facets: Facet[]
+  showPrice?: boolean
+}) {
   return (
     <div className="rounded-xl border bg-white">
+      {showPrice && <PriceBlock />}
       {facets.map((f, idx) => (
         <FacetSection key={f.id} facet={f} defaultOpen={idx < 2} />
       ))}
@@ -113,3 +120,44 @@ function FacetSection({ facet, defaultOpen }: { facet: Facet; defaultOpen: boole
     </div>
   )
 }
+
+function PriceBlock() {
+  const sp = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const minPrice = sp.get("minPrice") ?? ""
+  const maxPrice = sp.get("maxPrice") ?? ""
+
+  function setParam(key: "minPrice" | "maxPrice", value: string) {
+    const next = new URLSearchParams(sp)
+    const v = value.trim()
+    if (v) next.set(key, v)
+    else next.delete(key)
+    next.delete("page")
+    router.push(`${pathname}?${next.toString()}`, { scroll: false })
+  }
+
+  return (
+    <div className="border-b px-4 py-4">
+      <div className="font-medium text-sm mb-3">Price</div>
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          defaultValue={minPrice}
+          placeholder="Min"
+          className="rounded-lg border px-3 py-2 text-sm"
+          inputMode="numeric"
+          onBlur={(e) => setParam("minPrice", e.target.value)}
+        />
+        <input
+          defaultValue={maxPrice}
+          placeholder="Max"
+          className="rounded-lg border px-3 py-2 text-sm"
+          inputMode="numeric"
+          onBlur={(e) => setParam("maxPrice", e.target.value)}
+        />
+      </div>
+    </div>
+  )
+}
+
