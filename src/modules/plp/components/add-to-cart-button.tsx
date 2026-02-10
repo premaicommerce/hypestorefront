@@ -1,9 +1,10 @@
+// src/modules/plp/components/add-to-cart-button.tsx
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 
-// ✅ change this import to the real path of your cart actions file
+// ✅ Change this import to the real path of your cart actions file if needed
 import {
   addToCart,
   getOrSetCart,
@@ -76,57 +77,73 @@ export default function AddToCartButton({
     })
   }
 
-  // qty = 0 => show simple Add button
+  // qty = 0 => show colorful Add button
   if (qty <= 0) {
     return (
       <button
         type="button"
         disabled={isPending}
         onClick={inc}
-        className={`w-full rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition ${
-          isPending ? "opacity-60 cursor-wait" : ""
-        }`}
+        className={`w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition
+          bg-gradient-to-r from-emerald-500 to-teal-500
+          hover:from-emerald-600 hover:to-teal-600
+          active:scale-[0.98]
+          ${isPending ? "opacity-70 cursor-wait" : "shadow-sm"}
+        `}
       >
-        Add to cart
+        🛒 Add to cart
       </button>
     )
   }
 
-  // qty > 0 => show controls: [-] Added(qty) [+]
+  // qty > 0 => show colorful controls: [-] Added(qty) [+]
   return (
     <div className="w-full flex items-center gap-2">
+      {/* Minus */}
       <button
         type="button"
         onClick={dec}
         disabled={isPending || qty <= 0}
-        className={`h-10 w-10 rounded-lg border text-lg leading-none ${
+        className={`h-10 w-10 rounded-lg text-lg font-semibold transition
+          ${
           isPending || qty <= 0
-            ? "opacity-40 cursor-not-allowed"
-            : "hover:bg-neutral-50"
-        }`}
+            ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+            : "bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95"
+        }
+        `}
         aria-label="Decrease quantity"
       >
         −
       </button>
 
+      {/* Center status (click = add more) */}
       <button
         type="button"
         onClick={inc}
         disabled={isPending}
-        className={`flex-1 h-10 rounded-lg border text-sm font-medium ${
-          isPending ? "opacity-60 cursor-wait" : "hover:bg-neutral-50"
-        }`}
+        className={`flex-1 h-10 rounded-lg text-sm font-semibold transition
+          bg-gradient-to-r from-emerald-500 to-teal-500
+          text-white shadow-sm
+          hover:from-emerald-600 hover:to-teal-600
+          active:scale-[0.98]
+          ${isPending ? "opacity-70 cursor-wait" : ""}
+        `}
       >
-        Added ({qty})
+        Added · {qty}
       </button>
 
+      {/* Plus */}
       <button
         type="button"
         onClick={inc}
         disabled={isPending}
-        className={`h-10 w-10 rounded-lg border text-lg leading-none ${
-          isPending ? "opacity-60 cursor-wait" : "hover:bg-neutral-50"
-        }`}
+        className={`h-10 w-10 rounded-lg text-lg font-semibold transition
+          ${
+          isPending
+            ? "bg-neutral-100 text-neutral-400 cursor-wait"
+            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 active:scale-95"
+        }
+        `}
         aria-label="Increase quantity"
       >
         +
