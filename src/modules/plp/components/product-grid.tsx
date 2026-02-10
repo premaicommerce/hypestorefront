@@ -1,6 +1,4 @@
 import Link from "next/link"
-import AddToBucketButton from "./add-to-bucket-button"
-import CartQtyControls from "./cart-qty-controls"
 import AddToCartButton from "./add-to-cart-button"
 
 function formatMoney(amount?: number) {
@@ -20,6 +18,31 @@ function getAmountCents(p: any): number | undefined {
   return typeof amount === "number" ? amount : undefined
 }
 
+/**
+ * Medusa v2 inventory:
+ * - manage_inventory === false => always purchasable
+ * - allow_backorder === true => purchasable even if qty <= 0
+ * - inventory_quantity > 0 => purchasable
+ * If fields are missing, assume purchasable (avoid false "out of stock" on PLP).
+ */
+function isVariantInStock(v: any): boolean {
+  if (!v) return false
+
+  // If backend didn't include inventory fields, don't block purchase
+  const hasInventoryFields =
+    "manage_inventory" in v ||
+    "allow_backorder" in v ||
+    "inventory_quantity" in v
+
+  if (!hasInventoryFields) return true
+
+  if (v.manage_inventory === false) return true
+  if (v.allow_backorder === true) return true
+
+  const qty = typeof v.inventory_quantity === "number" ? v.inventory_quantity : 0
+  return qty > 0
+}
+
 export default function ProductGrid({
                                       products,
                                       countryCode,
@@ -30,21 +53,19 @@ export default function ProductGrid({
   return (
     <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
       {products.map((p) => {
-        const variantId = p?.variants?.[0]?.id
-
         const img = getImageUrl(p)
         const amount = getAmountCents(p)
-        const variant = p?.variants?.[0]
 
-        const inStock =
-          variant &&
-          (variant.manage_inventory === false ||
-            (variant.inventory_quantity ?? 0) > 0)
+        const variant = p?.variants?.[0]
+        const variantId = variant?.id
+        const inStock = isVariantInStock(variant)
+
         return (
           <div
             key={p.id}
-            className="group rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
+            className="rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
           >
+            {/* Image (no black bar) */}
             <Link href={`/products/${p.handle}`} className="block">
               <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
                 {img ? (
@@ -52,7 +73,7 @@ export default function ProductGrid({
                   <img
                     src={img}
                     alt={p.title ?? "Product"}
-                    className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                    className="h-full w-full object-cover"
                     loading="lazy"
                   />
                 ) : (
@@ -61,32 +82,30 @@ export default function ProductGrid({
                   </div>
                 )}
               </div>
-
-              <div className="mt-3 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-sm font-medium text-neutral-900 line-clamp-2">
-                    {p.title}
-                  </div>
-                </div>
-
-                {variantId && (
-                  <AddToCartButton
-                    variantId={variantId}
-                    countryCode={countryCode}
-                    inStock={inStock}
-                  />
-                )}
-
-               {/* <div className="text-sm font-semibold text-neutral-900 whitespace-nowrap">
-                  {formatMoney(amount)}
-                </div>*/}
-              </div>
             </Link>
 
-            {/* Add button */}
+            {/* Name BELOW product image */}
             <div className="mt-3">
-              <AddToBucketButton productId={p.id} />
+              <Link href={`/products/${p.handle}`} className="block">
+                <div className="text-sm font-medium text-neutral-900 line-clamp-2">
+                  {p.title}
+                </div>
+              </Link>
+
+              {/* Price below name (optional) */}
+              <div className="mt-1 text-sm font-semibold text-neutral-900">
+                {formatMoney(amount)}
+              </div>
             </div>
+
+            {/* Add to cart button on next line */}
+            {variantId ? (
+              <AddToCartButton
+                variantId={variantId}
+                countryCode={countryCode}
+                inStock={inStock}
+              />
+            ) : null}
           </div>
         )
       })}
