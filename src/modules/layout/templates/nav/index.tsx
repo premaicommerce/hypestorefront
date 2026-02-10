@@ -7,7 +7,7 @@ export default function Nav() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1">
           <span className="text-lg font-semibold text-ink">
-            BlueFrame
+            Dev
           </span>
           <span className="text-lg font-semibold text-brand-600">
             Prints

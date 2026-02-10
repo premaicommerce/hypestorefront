@@ -55,26 +55,7 @@ export default function Home() {
       </section>
 
       {/* Collections */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <h2 className="text-2xl font-semibold text-ink">
-          Shop by collection
-        </h2>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {["Landscapes", "City", "Minimal", "Abstract"].map((c) => (
-            <Link
-              key={c}
-              href={`/collections/${c.toLowerCase()}`}
-              className="rounded-2xl border border-gray-100 bg-white p-6 hover:shadow-soft transition"
-            >
-              <div className="font-medium text-ink">{c}</div>
-              <div className="mt-2 text-sm text-muted">
-                Explore prints
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
     </main>
   )
 }
