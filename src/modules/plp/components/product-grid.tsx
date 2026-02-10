@@ -26,32 +26,29 @@ function getAmountCents(p: any): number | undefined {
 }
 
 /**
- * Correct Medusa v2 stock logic:
- * - If manage_inventory === false => in stock
- * - If allow_backorder === true => in stock
- * - If manage_inventory === true and inventory_quantity is a number => qty > 0
- * - If inventory fields are missing/undefined => assume in stock (avoid false OOS)
+ * Safer stock logic for PLP:
+ * - If inventory fields are missing OR undefined -> treat as in stock (avoid false OOS)
+ * - If manage_inventory === false -> in stock
+ * - If allow_backorder === true -> in stock
+ * - If manage_inventory === true and inventory_quantity is number -> qty > 0
  */
 function isVariantInStock(v: any): boolean {
-  if (!v) return true // don’t block button if variant info is incomplete
+  if (!v) return true
 
   const mi = v.manage_inventory
   const ab = v.allow_backorder
   const iq = v.inventory_quantity
 
-  // If all inventory-related values are truly unknown, assume in stock
-  if (mi === undefined && ab === undefined && iq === undefined) return true
+  const allUnknown = mi === undefined && ab === undefined && iq === undefined
+  if (allUnknown) return true
 
   if (mi === false) return true
   if (ab === true) return true
 
-  // If manage_inventory not explicitly true, don't block
-  if (mi !== true) return true
+  if (mi !== true) return true // not explicitly managed => allow
 
-  // manage_inventory === true, rely on inventory_quantity if present
   if (typeof iq === "number") return iq > 0
 
-  // still unknown -> assume in stock
   return true
 }
 
@@ -75,9 +72,9 @@ export default function ProductGrid({
         return (
           <div
             key={p.id}
-            className="group rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
+            className="rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
           >
-            {/* Image with zoom-out on hover */}
+            {/* Image: zoom OUT on hover (start zoomed in) */}
             <Link href={`/products/${p.handle}`} className="block">
               <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
                 {img ? (
@@ -85,7 +82,7 @@ export default function ProductGrid({
                   <img
                     src={img}
                     alt={p.title ?? "Product"}
-                    className="h-full w-full object-cover transition-transform duration-300 scale-105 group-hover:scale-100"
+                    className="h-full w-full object-cover transition-transform duration-300 scale-105 hover:scale-100"
                     loading="lazy"
                   />
                 ) : (
@@ -96,7 +93,7 @@ export default function ProductGrid({
               </div>
             </Link>
 
-            {/* Centered title (Title Case) */}
+            {/* Centered Title Case name */}
             <div className="mt-3 text-center">
               <Link href={`/products/${p.handle}`} className="block">
                 <div className="text-sm font-medium text-neutral-900 line-clamp-2">
@@ -109,7 +106,7 @@ export default function ProductGrid({
               </div>
             </div>
 
-            {/* Add to cart button row */}
+            {/* Button next line */}
             {variantId ? (
               <div className="mt-3">
                 <AddToCartButton
