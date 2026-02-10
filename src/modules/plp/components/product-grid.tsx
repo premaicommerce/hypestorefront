@@ -67,7 +67,7 @@ export default function ProductGrid({
         return (
           <div
             key={p.id}
-            className="rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
+            className="rounded-2xl border bg-white p-2 sm:p-3 hover:shadow-sm hover:border-neutral-300 transition"
           >
             <Link href={`/products/${p.handle}`} className="block">
               <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
@@ -76,9 +76,13 @@ export default function ProductGrid({
                   <img
                     src={img}
                     alt={p.title ?? "Product"}
-                    className="h-full w-full object-cover transition-transform duration-300 scale-105 hover:scale-100"
                     loading="lazy"
-                  />
+                    className="
+                    h-full w-full object-cover
+                    transition-transform duration-300 ease-out
+                    scale-[1.15] hover:scale-[1.05]
+                  "
+                                />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-xs text-neutral-500">
                     No image
@@ -87,7 +91,7 @@ export default function ProductGrid({
               </div>
             </Link>
 
-            <div className="mt-3 text-center">
+            <div className="mt-2 text-center">
               <Link href={`/products/${p.handle}`} className="block">
                 <div className="text-sm font-medium text-neutral-900 line-clamp-2">
                   {toTitleCase(p.title)}
