@@ -6,6 +6,13 @@ function formatMoney(amount?: number) {
   return `£${(amount / 100).toFixed(2)}`
 }
 
+function toTitleCase(s?: string) {
+  if (!s) return ""
+  return s
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 function getImageUrl(p: any): string | null {
   const url = p?.thumbnail || p?.images?.[0]?.url || null
   return typeof url === "string" && url.length ? url : null
@@ -19,28 +26,33 @@ function getAmountCents(p: any): number | undefined {
 }
 
 /**
- * Medusa v2 inventory:
- * - manage_inventory === false => always purchasable
- * - allow_backorder === true => purchasable even if qty <= 0
- * - inventory_quantity > 0 => purchasable
- * If fields are missing, assume purchasable (avoid false "out of stock" on PLP).
+ * Correct Medusa v2 stock logic:
+ * - If manage_inventory === false => in stock
+ * - If allow_backorder === true => in stock
+ * - If manage_inventory === true and inventory_quantity is a number => qty > 0
+ * - If inventory fields are missing/undefined => assume in stock (avoid false OOS)
  */
 function isVariantInStock(v: any): boolean {
-  if (!v) return false
+  if (!v) return true // don’t block button if variant info is incomplete
 
-  // If backend didn't include inventory fields, don't block purchase
-  const hasInventoryFields =
-    "manage_inventory" in v ||
-    "allow_backorder" in v ||
-    "inventory_quantity" in v
+  const mi = v.manage_inventory
+  const ab = v.allow_backorder
+  const iq = v.inventory_quantity
 
-  if (!hasInventoryFields) return true
+  // If all inventory-related values are truly unknown, assume in stock
+  if (mi === undefined && ab === undefined && iq === undefined) return true
 
-  if (v.manage_inventory === false) return true
-  if (v.allow_backorder === true) return true
+  if (mi === false) return true
+  if (ab === true) return true
 
-  const qty = typeof v.inventory_quantity === "number" ? v.inventory_quantity : 0
-  return qty > 0
+  // If manage_inventory not explicitly true, don't block
+  if (mi !== true) return true
+
+  // manage_inventory === true, rely on inventory_quantity if present
+  if (typeof iq === "number") return iq > 0
+
+  // still unknown -> assume in stock
+  return true
 }
 
 export default function ProductGrid({
@@ -63,9 +75,9 @@ export default function ProductGrid({
         return (
           <div
             key={p.id}
-            className="rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
+            className="group rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
           >
-            {/* Image (no black bar) */}
+            {/* Image with zoom-out on hover */}
             <Link href={`/products/${p.handle}`} className="block">
               <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
                 {img ? (
@@ -73,7 +85,7 @@ export default function ProductGrid({
                   <img
                     src={img}
                     alt={p.title ?? "Product"}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-transform duration-300 scale-105 group-hover:scale-100"
                     loading="lazy"
                   />
                 ) : (
@@ -84,27 +96,28 @@ export default function ProductGrid({
               </div>
             </Link>
 
-            {/* Name BELOW product image */}
-            <div className="mt-3">
+            {/* Centered title (Title Case) */}
+            <div className="mt-3 text-center">
               <Link href={`/products/${p.handle}`} className="block">
                 <div className="text-sm font-medium text-neutral-900 line-clamp-2">
-                  {p.title}
+                  {toTitleCase(p.title)}
                 </div>
               </Link>
 
-              {/* Price below name (optional) */}
               <div className="mt-1 text-sm font-semibold text-neutral-900">
                 {formatMoney(amount)}
               </div>
             </div>
 
-            {/* Add to cart button on next line */}
+            {/* Add to cart button row */}
             {variantId ? (
-              <AddToCartButton
-                variantId={variantId}
-                countryCode={countryCode}
-                inStock={inStock}
-              />
+              <div className="mt-3">
+                <AddToCartButton
+                  variantId={variantId}
+                  countryCode={countryCode}
+                  inStock={inStock}
+                />
+              </div>
             ) : null}
           </div>
         )
