@@ -1,10 +1,9 @@
-// src/modules/plp/components/add-to-cart-button.tsx
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 
-// ✅ Change this import to the real path of your cart actions file if needed
+// ✅ adjust if your cart actions file path differs
 import {
   addToCart,
   getOrSetCart,
@@ -17,14 +16,17 @@ export default function AddToCartButton({
                                           variantId,
                                           countryCode,
                                           inStock,
+                                          maxQty, // ✅ inventory cap (null = no cap)
                                         }: {
   variantId: string
   countryCode: string
   inStock: boolean
+  maxQty: number | null
 }) {
   const router = useRouter()
   const [qty, setQty] = useState(0)
   const [lineId, setLineId] = useState<string | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   async function sync() {
@@ -42,6 +44,9 @@ export default function AddToCartButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variantId, countryCode])
 
+  const reachedMax = maxQty !== null && qty >= maxQty
+  const plusDisabled = isPending || !inStock || reachedMax
+
   if (!inStock) {
     return (
       <button
@@ -55,8 +60,25 @@ export default function AddToCartButton({
   }
 
   function inc() {
+    if (reachedMax) {
+      setMsg(`Max stock reached (${maxQty})`)
+      return
+    }
+
+    setMsg(null)
+
     startTransition(async () => {
-      await addToCart({ variantId, quantity: 1, countryCode })
+      try {
+        await addToCart({ variantId, quantity: 1, countryCode })
+      } catch (e: any) {
+        // Medusa inventory protection
+        const text = String(e?.message ?? "")
+        if (text.toLowerCase().includes("required inventory")) {
+          setMsg("Max stock reached")
+        } else {
+          setMsg("Unable to add right now")
+        }
+      }
       await sync()
       router.refresh()
     })
@@ -64,6 +86,7 @@ export default function AddToCartButton({
 
   function dec() {
     if (!lineId || qty <= 0) return
+    setMsg(null)
 
     startTransition(async () => {
       const nextQty = qty - 1
@@ -77,77 +100,86 @@ export default function AddToCartButton({
     })
   }
 
-  // qty = 0 => show colorful Add button
+  // qty = 0 => colorful Add button
   if (qty <= 0) {
     return (
-      <button
-        type="button"
-        disabled={isPending}
-        onClick={inc}
-        className={`w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition
-          bg-gradient-to-r from-emerald-500 to-teal-500
-          hover:from-emerald-600 hover:to-teal-600
-          active:scale-[0.98]
-          ${isPending ? "opacity-70 cursor-wait" : "shadow-sm"}
-        `}
-      >
-        🛒 Add to cart
-      </button>
+      <div>
+        <button
+          type="button"
+          disabled={plusDisabled}
+          onClick={inc}
+          className={`w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition
+            bg-gradient-to-r from-emerald-500 to-teal-500
+            hover:from-emerald-600 hover:to-teal-600
+            active:scale-[0.98]
+            ${plusDisabled ? "opacity-70 cursor-not-allowed" : "shadow-sm"}
+          `}
+        >
+          🛒 Add to cart
+        </button>
+        {msg ? <div className="mt-2 text-xs text-rose-600 text-center">{msg}</div> : null}
+      </div>
     )
   }
 
-  // qty > 0 => show colorful controls: [-] Added(qty) [+]
+  // qty > 0 => colorful controls
   return (
-    <div className="w-full flex items-center gap-2">
-      {/* Minus */}
-      <button
-        type="button"
-        onClick={dec}
-        disabled={isPending || qty <= 0}
-        className={`h-10 w-10 rounded-lg text-lg font-semibold transition
-          ${
-          isPending || qty <= 0
-            ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-            : "bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95"
-        }
-        `}
-        aria-label="Decrease quantity"
-      >
-        −
-      </button>
+    <div>
+      <div className="w-full flex items-center gap-2">
+        <button
+          type="button"
+          onClick={dec}
+          disabled={isPending || qty <= 0}
+          className={`h-10 w-10 rounded-lg text-lg font-semibold transition
+            ${
+            isPending || qty <= 0
+              ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+              : "bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95"
+          }
+          `}
+          aria-label="Decrease quantity"
+        >
+          −
+        </button>
 
-      {/* Center status (click = add more) */}
-      <button
-        type="button"
-        onClick={inc}
-        disabled={isPending}
-        className={`flex-1 h-10 rounded-lg text-sm font-semibold transition
-          bg-gradient-to-r from-emerald-500 to-teal-500
-          text-white shadow-sm
-          hover:from-emerald-600 hover:to-teal-600
-          active:scale-[0.98]
-          ${isPending ? "opacity-70 cursor-wait" : ""}
-        `}
-      >
-        Added · {qty}
-      </button>
+        <button
+          type="button"
+          onClick={inc}
+          disabled={plusDisabled}
+          className={`flex-1 h-10 rounded-lg text-sm font-semibold transition
+            bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm
+            hover:from-emerald-600 hover:to-teal-600 active:scale-[0.98]
+            ${plusDisabled ? "opacity-70 cursor-not-allowed" : ""}
+          `}
+          title={reachedMax ? "Max stock reached" : "Add one more"}
+        >
+          Added · {qty}
+        </button>
 
-      {/* Plus */}
-      <button
-        type="button"
-        onClick={inc}
-        disabled={isPending}
-        className={`h-10 w-10 rounded-lg text-lg font-semibold transition
-          ${
-          isPending
-            ? "bg-neutral-100 text-neutral-400 cursor-wait"
-            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 active:scale-95"
-        }
-        `}
-        aria-label="Increase quantity"
-      >
-        +
-      </button>
+        <button
+          type="button"
+          onClick={inc}
+          disabled={plusDisabled}
+          className={`h-10 w-10 rounded-lg text-lg font-semibold transition
+            ${
+            plusDisabled
+              ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 active:scale-95"
+          }
+          `}
+          aria-label="Increase quantity"
+        >
+          +
+        </button>
+      </div>
+
+      {reachedMax ? (
+        <div className="mt-2 text-xs text-rose-600 text-center">
+          Max stock reached{typeof maxQty === "number" ? ` (${maxQty})` : ""}
+        </div>
+      ) : msg ? (
+        <div className="mt-2 text-xs text-rose-600 text-center">{msg}</div>
+      ) : null}
     </div>
   )
 }

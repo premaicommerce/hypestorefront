@@ -8,9 +8,7 @@ function formatMoney(amount?: number) {
 
 function toTitleCase(s?: string) {
   if (!s) return ""
-  return s
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function getImageUrl(p: any): string | null {
@@ -25,31 +23,27 @@ function getAmountCents(p: any): number | undefined {
   return typeof amount === "number" ? amount : undefined
 }
 
-/**
- * Safer stock logic for PLP:
- * - If inventory fields are missing OR undefined -> treat as in stock (avoid false OOS)
- * - If manage_inventory === false -> in stock
- * - If allow_backorder === true -> in stock
- * - If manage_inventory === true and inventory_quantity is number -> qty > 0
- */
 function isVariantInStock(v: any): boolean {
   if (!v) return true
-
   const mi = v.manage_inventory
   const ab = v.allow_backorder
   const iq = v.inventory_quantity
 
-  const allUnknown = mi === undefined && ab === undefined && iq === undefined
-  if (allUnknown) return true
-
+  if (mi === undefined && ab === undefined && iq === undefined) return true
   if (mi === false) return true
   if (ab === true) return true
-
-  if (mi !== true) return true // not explicitly managed => allow
-
+  if (mi !== true) return true
   if (typeof iq === "number") return iq > 0
-
   return true
+}
+
+function getMaxQty(v: any): number | null {
+  if (!v) return null
+  // If backorders allowed OR inventory not managed => no max cap from inventory
+  if (v.allow_backorder === true) return null
+  if (v.manage_inventory === false) return null
+  if (v.manage_inventory !== true) return null
+  return typeof v.inventory_quantity === "number" ? v.inventory_quantity : null
 }
 
 export default function ProductGrid({
@@ -68,13 +62,13 @@ export default function ProductGrid({
         const variant = p?.variants?.[0]
         const variantId = variant?.id
         const inStock = isVariantInStock(variant)
+        const maxQty = getMaxQty(variant)
 
         return (
           <div
             key={p.id}
             className="rounded-xl border bg-white p-3 hover:shadow-sm hover:border-neutral-300 transition"
           >
-            {/* Image: zoom OUT on hover (start zoomed in) */}
             <Link href={`/products/${p.handle}`} className="block">
               <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
                 {img ? (
@@ -93,26 +87,24 @@ export default function ProductGrid({
               </div>
             </Link>
 
-            {/* Centered Title Case name */}
             <div className="mt-3 text-center">
               <Link href={`/products/${p.handle}`} className="block">
                 <div className="text-sm font-medium text-neutral-900 line-clamp-2">
                   {toTitleCase(p.title)}
                 </div>
               </Link>
-
               <div className="mt-1 text-sm font-semibold text-neutral-900">
                 {formatMoney(amount)}
               </div>
             </div>
 
-            {/* Button next line */}
             {variantId ? (
               <div className="mt-3">
                 <AddToCartButton
                   variantId={variantId}
                   countryCode={countryCode}
                   inStock={inStock}
+                  maxQty={maxQty}
                 />
               </div>
             ) : null}
