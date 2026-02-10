@@ -125,18 +125,19 @@ export default function AddToCartButton({
   // qty > 0 => colorful controls
   return (
     <div>
-      <div className="w-full flex items-center gap-2">
+      {/* Desktop/tablet row */}
+      <div className="hidden sm:flex w-full items-center gap-2">
         <button
           type="button"
           onClick={dec}
           disabled={isPending || qty <= 0}
           className={`h-10 w-10 rounded-lg text-lg font-semibold transition
-            ${
+          ${
             isPending || qty <= 0
               ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
               : "bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95"
           }
-          `}
+        `}
           aria-label="Decrease quantity"
         >
           −
@@ -147,10 +148,10 @@ export default function AddToCartButton({
           onClick={inc}
           disabled={plusDisabled}
           className={`flex-1 h-10 rounded-lg text-sm font-semibold transition
-            bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm
-            hover:from-emerald-600 hover:to-teal-600 active:scale-[0.98]
-            ${plusDisabled ? "opacity-70 cursor-not-allowed" : ""}
-          `}
+          bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm
+          hover:from-emerald-600 hover:to-teal-600 active:scale-[0.98]
+          ${plusDisabled ? "opacity-70 cursor-not-allowed" : ""}
+        `}
           title={reachedMax ? "Max stock reached" : "Add one more"}
         >
           Added · {qty}
@@ -161,16 +162,66 @@ export default function AddToCartButton({
           onClick={inc}
           disabled={plusDisabled}
           className={`h-10 w-10 rounded-lg text-lg font-semibold transition
-            ${
+          ${
             plusDisabled
               ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
               : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 active:scale-95"
           }
-          `}
+        `}
           aria-label="Increase quantity"
         >
           +
         </button>
+      </div>
+
+      {/* Mobile stacked layout */}
+      <div className="sm:hidden">
+        <button
+          type="button"
+          onClick={inc}
+          disabled={plusDisabled}
+          className={`w-full h-10 rounded-lg text-sm font-semibold transition
+          bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm
+          hover:from-emerald-600 hover:to-teal-600 active:scale-[0.98]
+          ${plusDisabled ? "opacity-70 cursor-not-allowed" : ""}
+        `}
+        >
+          Added · {qty}
+        </button>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={dec}
+            disabled={isPending || qty <= 0}
+            className={`h-10 rounded-lg text-lg font-semibold transition
+            ${
+              isPending || qty <= 0
+                ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                : "bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95"
+            }
+          `}
+            aria-label="Decrease quantity"
+          >
+            −
+          </button>
+
+          <button
+            type="button"
+            onClick={inc}
+            disabled={plusDisabled}
+            className={`h-10 rounded-lg text-lg font-semibold transition
+            ${
+              plusDisabled
+                ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 active:scale-95"
+            }
+          `}
+            aria-label="Increase quantity"
+          >
+            +
+          </button>
+        </div>
       </div>
 
       {reachedMax ? (
@@ -181,5 +232,5 @@ export default function AddToCartButton({
         <div className="mt-2 text-xs text-rose-600 text-center">{msg}</div>
       ) : null}
     </div>
-  )
+   )
 }
