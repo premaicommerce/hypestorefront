@@ -45,13 +45,19 @@ export default function ProductImageCarousel({
   return (
     <div className="w-full">
       {/* Main image */}
-      <div className="relative overflow-hidden rounded-2xl border bg-neutral-50">
-        <div className="aspect-square w-full">
+      <div className="relative overflow-hidden rounded-2xl border bg-[#f5f5f3]">
+        <div className="max-h-[65vh] max-w-full object-contain shadow-md">
+
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={current}
             alt={title ?? "Product image"}
-            className="h-full w-full object-contain p-4"
+            className="
+        max-h-[65vh]
+        max-w-full
+        object-contain
+        transition-transform duration-300 ease-out
+      "
             loading="eager"
           />
         </div>
