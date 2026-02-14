@@ -89,13 +89,19 @@ export default function ProductGrid({
             className="group overflow-hidden rounded-2xl border bg-white hover:shadow-sm hover:border-neutral-300 transition"
           >
             <Link href={`/products/${p.handle}`} className="block">
-              <div className="aspect-square bg-[#f5f5f3] p-2 sm:p-3 flex items-center justify-center">
+              <div className="bg-[#f5f5f3] p-2 sm:p-3 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={img}
                   alt={p.title ?? "Product"}
                   loading="lazy"
-                  className="h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-105"
+                  className="
+      w-full
+      h-auto
+      object-contain
+      transition-transform duration-300 ease-out
+      group-hover:scale-105
+    "
                 />
               </div>
             </Link>
