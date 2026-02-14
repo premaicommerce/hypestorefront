@@ -69,8 +69,8 @@ export default async function StorePage({
     : searchParams.maxPrice
 
   return (
-    <div className="mx-auto max-w-[1400px] px-6 py-10">
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[360px_1fr]">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-10">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_1fr]">
         <aside className="hidden lg:block">
           <div className="sticky top-24">
             <FacetSidebar facets={[]} showPrice />

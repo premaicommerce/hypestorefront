@@ -73,7 +73,7 @@ export default function ProductGrid({
   countryCode: string
 }) {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
       {products.map((p) => {
         const img = getImageUrl(p)
         const amount = getAmountCents(p)
@@ -108,7 +108,7 @@ export default function ProductGrid({
               </div>
             </Link>
 
-            <div className="p-5 text-center">
+            <div className="p-4 text-center">
               <Link href={`/products/${p.handle}`} className="block">
                 <div className="text-lg font-semibold text-neutral-900 line-clamp-2">
                   {toTitleCase(p.title)}
