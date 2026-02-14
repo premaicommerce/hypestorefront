@@ -73,7 +73,7 @@ export default function ProductGrid({
   countryCode: string
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((p) => {
         const img = getImageUrl(p)
         const amount = getAmountCents(p)
@@ -96,7 +96,8 @@ export default function ProductGrid({
                     src={img}
                     alt={p.title ?? "Product"}
                     loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 ease-out scale-125 group-hover:scale-110"
+                    className="h-full w-full object-cover transition-transform duration-300 ease-out scale-110 group-hover:scale-105"
+
                   />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-xs text-neutral-500">
@@ -106,19 +107,19 @@ export default function ProductGrid({
               </div>
             </Link>
 
-            <div className="p-3 text-center">
+            <div className="p-5 text-center">
               <Link href={`/products/${p.handle}`} className="block">
-                <div className="text-sm font-medium text-neutral-900 line-clamp-2">
+                <div className="text-lg font-semibold text-neutral-900 line-clamp-2">
                   {toTitleCase(p.title)}
                 </div>
               </Link>
 
-              <div className="mt-1 text-sm font-semibold text-neutral-900">
+              <div className="text-lg font-semibold text-neutral-900 line-clamp-2">
                 {formatMoney(amount)}
               </div>
 
               {variantId ? (
-                <div className="mt-3">
+                <div className="mt-4">
                   <AddToCartButton
                     variantId={variantId}
                     countryCode={countryCode}
